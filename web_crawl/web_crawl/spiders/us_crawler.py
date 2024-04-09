@@ -1,0 +1,39 @@
+from scrapy.spiders import CrawlSpider, Rule
+from scrapy.linkextractors import LinkExtractor
+import json
+from bs4 import BeautifulSoup
+
+class usCrawler(CrawlSpider):
+
+    name = 'uscrawler'
+    allowed_domains = ['eu.usatoday.com']  # allowed websites for the crawler
+    start_urls = ['https://eu.usatoday.com/']  # base link
+
+    # use scrapy shell url to test stuff interactively
+    rules = (
+        Rule(LinkExtractor(allow=(), unique=True), callback='parse_item', follow=True),  # parse_item handles all these links
+    )
+
+    def parse_item(self, response):
+        #soup = BeautifulSoup(response.text, 'html.parser')
+        #script_tag = soup.find('script', id='fusion-metadata')
+        script_tag=True
+        if script_tag:
+            #script_content = script_tag.string
+            #article_content= json.loads(script_content)
+            #print(article_content)
+            content=""
+            scripts = response.xpath("//script[@type='application/ld+json']/text()").getall()
+            for script in scripts:
+                data = json.loads(script)
+                if isinstance(data, dict) and '@type'in data.keys() and data['@type'] == 'NewsArticle':
+                    if 'image' in data.keys():
+                        image = data['image']['url']
+                        output = {'url': response.url, 'content': content, 'image': image, 'date': data['dateModified'],
+                                  'title': data['headline']}
+                    else:
+                        output = {'url': response.url, 'content': content, 'date': data['dateModified'],
+                                  'title': data['headline']}
+
+                    with open(f'../news_papers/US/{data["headline"]}.json', 'w') as file:
+                        json.dump(output, file, indent=4)
