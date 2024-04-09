@@ -15,14 +15,15 @@ class usCrawler(CrawlSpider):
     )
 
     def parse_item(self, response):
-        #soup = BeautifulSoup(response.text, 'html.parser')
-        #script_tag = soup.find('script', id='fusion-metadata')
-        script_tag=True
-        if script_tag:
-            #script_content = script_tag.string
-            #article_content= json.loads(script_content)
-            #print(article_content)
-            content=""
+        soup = BeautifulSoup(response.text, 'html.parser')
+        content_div = soup.find('div', id='content')
+        content = ""
+        if content_div:
+            paragraphs = content_div.find_all('p')
+            for paragraph in paragraphs:
+                paragraph_text = paragraph.get_text(separator=" ", strip=False)
+                print(paragraph_text)
+                content += paragraph_text + " "
             scripts = response.xpath("//script[@type='application/ld+json']/text()").getall()
             for script in scripts:
                 data = json.loads(script)
