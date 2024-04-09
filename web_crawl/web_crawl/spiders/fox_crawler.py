@@ -15,20 +15,17 @@ class FOXCrawler(CrawlSpider):
     )
 
     def parse_item(self, response):
-        #article_content = response.xpath("//div[contains(@class, 'article__content-container')]")
-        article_content=True
-        if article_content:
-            scripts = response.xpath("//script[@type='application/ld+json']/text()").getall()
-            for script in scripts:
-                data = json.loads(script)
-                if data['@type'] == 'NewsArticle':
-                    if 'image' in data.keys():
-                        image = data['image']['url']
-                        output = {'url': response.url, 'content': data['articleBody'], 'image': image, 'date': data['dateModified'],
-                                'title': data['headline']}
-                    else:
-                        output = {'url': response.url, 'content': data['articleBody'], 'date': data['dateModified'],
-                                'title': data['headline']}
+        scripts = response.xpath("//script[@type='application/ld+json']/text()").getall()
+        for script in scripts:
+            data = json.loads(script)
+            if isinstance(data, dict) and '@type'in data.keys() and data['@type'] == 'NewsArticle':
+                if 'image' in data.keys():
+                    image = data['image']['url']
+                    output = {'url': response.url, 'content': data['articleBody'], 'image': image, 'date': data['dateModified'],
+                        'title': data['headline']}
+                else:
+                    output = {'url': response.url, 'content': data['articleBody'], 'date': data['dateModified'],
+                    'title': data['headline']}
 
-                    with open(f'../news_papers/FOX/{data["headline"]}.json', 'w') as file:
-                        json.dump(output, file, indent=4)
+                with open(f'../news_papers/FOX/{data["headline"]}.json', 'w') as file:
+                    json.dump(output, file, indent=4)
