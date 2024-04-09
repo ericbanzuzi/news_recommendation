@@ -2,6 +2,31 @@ body{margin-top:20px;
   background-color: #eee;
 }
 
+/* Search bar: begin */
+
+.dropdown-minimal-width {
+  width: auto; /* Adjust width based on content */
+  min-width: 100px; /* Set a minimum width */
+}
+
+.search-bar-container {
+  padding: 20px;
+  border: 1px solid #ccc;
+  border-radius: 4px; /* Adjusted for Bootstrap 3 style */
+  background-color: #f9f9f9;
+}
+
+.search-bar-container .btn-search {
+  background-color: #337ab7; /* Adjusted primary color for Bootstrap 3 */
+  color: white;
+}
+
+.search-bar-container .form-control, .search-bar-container .btn {
+  margin-bottom: 10px;
+}
+
+/* Search bar: end */
+
 .search-result-categories>li>a {
   color: #b6b6b6;
   font-weight: 400
