@@ -12,17 +12,20 @@
 
   <div class="container mt-5">
     <div class="row">
-      <div class="col-md-6 col-md-offset-3">
+      <div class="col-md-8 col-md-offset-2">
         <div class="search-bar-container">
-          <!-- Use form-inline for inline elements in Bootstrap 3 -->
-          <div class="form-inline" role="form">
-            <div class="form-group">
+          <!-- Row for input and button -->
+          <div class="row">
+            <div class="col-xs-8 col-sm-10"> <!-- Adjust column sizes for responsiveness -->
               <input type="text" class="form-control" placeholder="Search...">
             </div>
-            <div class="form-group">
-              <button type="button" class="btn btn-search">Search</button>
+            <div class="col-xs-4 col-sm-2"> <!-- Adjust column sizes for the button -->
+              <button type="button" class="btn btn-search btn-block">Search</button>
             </div>
-            <div class="form-group">
+          </div>
+          <!-- Row for dropdown, below input and button -->
+          <div class="row" style="margin-top: 10px;"> <!-- Add some top margin for spacing -->
+            <div class="col-xs-12">
               <select class="form-control dropdown-minimal-width">
                 <option selected>Any time</option>
                 <option value="1">Last year</option>
@@ -35,6 +38,8 @@
       </div>
     </div>
   </div>
+
+
 
   <div class="row ng-scope">
     <div class="col-md-8 col-md-push-2">

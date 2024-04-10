@@ -9,15 +9,16 @@ body{margin-top:20px;
   min-width: 100px; /* Set a minimum width */
 }
 
+/* Existing styles */
 .search-bar-container {
   padding: 20px;
   border: 1px solid #ccc;
-  border-radius: 4px; /* Adjusted for Bootstrap 3 style */
+  border-radius: 4px; /* Slightly rounded corners for Bootstrap 3 */
   background-color: #f9f9f9;
 }
 
 .search-bar-container .btn-search {
-  background-color: #337ab7; /* Adjusted primary color for Bootstrap 3 */
+  background-color: #337ab7; /* Bootstrap 3 primary color */
   color: white;
 }
 
