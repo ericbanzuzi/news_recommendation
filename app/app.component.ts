@@ -10,23 +10,40 @@ import { RouterOutlet } from '@angular/router';
 })
 export class AppComponent {
   title = 'SearchEnginesUI';
-  liked = 'Like';
-  likeCount = 0;
-  hasLiked = false;
+  thumbsUpStatusClass = 'thumbs-up-no';
+  thumbsDownStatusClass = 'thumbs-down-no';
+  isThumbsUp = false;
+  isThumbsDown = false;
   AppComponent(){}
 
 
 
-  likeClick() {
-    if (!this.hasLiked) {
-      this.hasLiked = true;
-      this.liked = 'Unlike';
-      this.likeCount += 1;
+  thumbsUpClick() {
+    if (this.isThumbsUp) {
+      this.isThumbsUp = false;
+      this.thumbsUpStatusClass = 'thumbs-up-no';
+      this.isThumbsDown = false;
+      this.thumbsDownStatusClass = 'thumbs-down-no';
     } else {
-      this.hasLiked = false;
-      this.liked = 'Like';
-      this.likeCount -= 1;
-    };
+      this.isThumbsUp = true;
+      this.thumbsUpStatusClass = 'thumbs-up-yes';
+      this.isThumbsDown = false;
+      this.thumbsDownStatusClass = 'thumbs-down-no';
+    }
+  }
+
+  thumbsDownClick() {
+    if (this.isThumbsDown) {
+      this.isThumbsDown = false;
+      this.thumbsDownStatusClass = 'thumbs-down-no';
+      this.isThumbsUp = false;
+      this.thumbsUpStatusClass = 'thumbs-up-no';
+    } else {
+      this.isThumbsDown = true;
+      this.thumbsDownStatusClass = 'thumbs-down-yes';
+      this.isThumbsUp = false;
+      this.thumbsUpStatusClass = 'thumbs-up-no';
+    }
   }
 
 
