@@ -138,7 +138,7 @@ body{margin-top:20px;
 /* like dislike: begin */
 
 .fa {
-  font-size: 30px;
+  font-size: 28px;
   cursor: pointer;
   user-select: none;
   margin-left: 5px;
@@ -156,7 +156,7 @@ body{margin-top:20px;
 }
 
 .thumbs-up-no:hover {
-  color: darkgray;
+  color: lightblue;
 }
 
 .thumbs-down-no {
@@ -164,15 +164,15 @@ body{margin-top:20px;
 }
 
 .thumbs-down-no:hover {
-  color: darkgray;
+  color: lightcoral;
 }
 
 .thumbs-up-yes {
-  color: green;
+  color: blue;
 }
 
 .thumbs-up-yes:hover {
-  color: lightgreen;
+  color: blue;
 }
 
 .thumbs-down-yes {
@@ -180,7 +180,7 @@ body{margin-top:20px;
 }
 
 .thumbs-down-yes:hover {
-  color: orange;
+  color: red;
 }
 
 /* like dislike: end */
