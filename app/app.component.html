@@ -6,6 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link href="https://netdna.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" rel="stylesheet">
   <link href="app.component.css" rel="stylesheet">
+
 </head>
 <body>
 <div class="container">
@@ -55,6 +56,11 @@
             </div>
           </div>
         </div>
+        <body ng-app ng-controller="Ctrl">
+        <a on-click="likeClick()">
+          {{this.liked}} {{this.likeCount}}
+        </a>
+        </body>
       </section>
       <section class="search-result-item">
         <a class="image-link" href="#"><img class="image" height="250px" width="400px" src="https://t3.ftcdn.net/jpg/01/75/17/46/360_F_175174631_fZWpQKTkvuuXxZN6rz7x7mzjwCrhJq0o.jpg">
