@@ -21,8 +21,7 @@ class usCrawler(CrawlSpider):
         if content_div:
             paragraphs = content_div.find_all('p')
             for paragraph in paragraphs:
-                paragraph_text = paragraph.get_text(separator=" ", strip=False)
-                print(paragraph_text)
+                paragraph_text = paragraph.get_text(separator=" ", strip=True)
                 content += paragraph_text + " "
             scripts = response.xpath("//script[@type='application/ld+json']/text()").getall()
             for script in scripts:
