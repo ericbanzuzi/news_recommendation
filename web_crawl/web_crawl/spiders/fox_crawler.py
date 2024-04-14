@@ -1,10 +1,12 @@
+import sys
+
 from scrapy.spiders import CrawlSpider, Rule
 from scrapy.linkextractors import LinkExtractor
 import json
 
 
 class FOXCrawler(CrawlSpider):
-
+    count = 0
     name = 'foxcrawler'
     allowed_domains = ['foxnews.com']  # allowed websites for the crawler
     start_urls = ['https://www.foxnews.com/']  # base link
@@ -22,10 +24,13 @@ class FOXCrawler(CrawlSpider):
                 if 'image' in data.keys():
                     image = data['image']['url']
                     output = {'url': response.url, 'content': data['articleBody'], 'image': image, 'date': data['dateModified'],
-                        'title': data['headline']}
+                              'title': data['headline']}
                 else:
                     output = {'url': response.url, 'content': data['articleBody'], 'date': data['dateModified'],
-                    'title': data['headline']}
+                              'title': data['headline']}
 
                 with open(f'../news_papers/FOX/{data["headline"]}.json', 'w') as file:
                     json.dump(output, file, indent=4)
+                    self.count += 1
+                    if self.count == 50000:
+                        sys.exit()

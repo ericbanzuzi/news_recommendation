@@ -1,17 +1,19 @@
+import sys
+
 from scrapy.spiders import CrawlSpider, Rule
 from scrapy.linkextractors import LinkExtractor
 import json
 
 
 class CNNCrawler(CrawlSpider):
-
+    count = 0
     name = 'cnncrawler'
     allowed_domains = ['cnn.com']  # allowed websites for the crawler
     start_urls = ['https://edition.cnn.com/']  # base link
 
     # use scrapy shell url to test stuff interactively
     rules = (
-        Rule(LinkExtractor(allow='index.html$', unique=True), callback='parse_item', follow=True),  # pase_item handles all these links
+        Rule(LinkExtractor(allow='index.html$', deny='arabic', unique=True), callback='parse_item', follow=True),  # pase_item handles all these links
     )
 
     def parse_item(self, response):
@@ -29,8 +31,7 @@ class CNNCrawler(CrawlSpider):
 
             with open(f'../news_papers/CNN/{data["headline"]}.json', 'w') as file:
                 json.dump(output, file, indent=4)
-
-
-
-
+                self.count += 1
+                if self.count == 50000:
+                    sys.exit()
 

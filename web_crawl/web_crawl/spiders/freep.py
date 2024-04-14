@@ -3,11 +3,11 @@ from scrapy.linkextractors import LinkExtractor
 import json
 from bs4 import BeautifulSoup
 
-class usCrawler(CrawlSpider):
+class freepCrawler(CrawlSpider):
 
-    name = 'uscrawler'
-    allowed_domains = ['eu.usatoday.com']  # allowed websites for the crawler
-    start_urls = ['https://eu.usatoday.com/']  # base link
+    name = 'freepcrawler'
+    allowed_domains = ['eu.freep.com']  # allowed websites for the crawler
+    start_urls = ['https://eu.freep.com/'] # base link
 
     # use scrapy shell url to test stuff interactively
     rules = (
@@ -35,5 +35,5 @@ class usCrawler(CrawlSpider):
                         output = {'url': response.url, 'content': content, 'date': data['dateModified'],
                                   'title': data['headline']}
 
-                    with open(f'../news_papers/US/{data["headline"]}.json', 'w') as file:
+                    with open(f'../news_papers/FREEP/{data["headline"]}.json', 'w') as file:
                         json.dump(output, file, indent=4)

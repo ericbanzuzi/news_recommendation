@@ -13,8 +13,7 @@ class GuardianCrawler(CrawlSpider):
 
     # use scrapy shell url to test stuff interactively
     rules = (
-        Rule(LinkExtractor(allow='https://www.theguardian.com/', deny=('jobs', 'syndication'), unique=True)),  # pase_item handles all these links
-        Rule(LinkExtractor(allow='\S+/\d{4}/[a-z]+/\d{2}/\S+', unique=True), callback='parse_item', follow=True),
+        Rule(LinkExtractor(allow='https://www.theguardian.com/', deny=('jobs', 'profile', 'syndication'), unique=True), callback='parse_item', follow=True),  # pase_item handles all these links
     )
 
     def parse_item(self, response):
