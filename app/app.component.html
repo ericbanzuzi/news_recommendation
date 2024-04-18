@@ -22,7 +22,7 @@
               <input type="text" class="form-control" placeholder="Search...">
             </div>
             <div class="col-xs-4 col-sm-2"> <!-- Adjust column sizes for the button -->
-              <button type="button" class="btn btn-search btn-block">Search</button>
+              <button type="button" class="btn btn-search btn-block" on-click="search('hey')">Search</button>
             </div>
           </div>
           <!-- Row for dropdown, below input and button -->
@@ -57,7 +57,7 @@
             </div>
           </div>
           <div class="like-dislike-container">
-            <span class="fa fa-thumbs-up {{this.thumbsUpStatusClass}}"  on-click="thumbsUpClick()"></span>
+            <span class="fa fa-thumbs-up {{this.thumbsUpStatusClass}}" on-click="thumbsUpClick()"></span>
             <span class="fa fa-thumbs-down {{this.thumbsDownStatusClass}}" on-click="thumbsDownClick()"></span>
           </div>
         </div>

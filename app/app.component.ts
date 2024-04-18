@@ -1,5 +1,9 @@
-import { Component } from '@angular/core';
+import {Component, OnInit} from '@angular/core';
 import { RouterOutlet } from '@angular/router';
+import {  HttpErrorResponse } from '@angular/common/http';
+import {Article} from "./article";
+import { environment } from '../environments/environment';
+import {ArticleService} from "./article.service";
 
 @Component({
   selector: 'app-root',
@@ -8,15 +12,33 @@ import { RouterOutlet } from '@angular/router';
   templateUrl: './app.component.html',
   styleUrl: './app.component.css'
 })
-export class AppComponent {
+
+
+export class AppComponent implements OnInit {
   title = 'SearchEnginesUI';
   thumbsUpStatusClass = 'thumbs-up-no';
   thumbsDownStatusClass = 'thumbs-down-no';
   isThumbsUp = false;
   isThumbsDown = false;
+  public articles: Article[] = [];
+  private apiServerUrl = environment.apiBaseUrl;
   AppComponent(){}
+  ngOnInit() {
+  }
 
+  constructor(private articleService: ArticleService){}
 
+  search(query: string) {
+    this.articleService.getArticles(query).subscribe(
+      (response: Article[]) => {
+        this.articles = response;
+        console.log(this.articles);
+      },
+      (error: HttpErrorResponse) => {
+        alert(error.message);
+      }
+    );
+  }
 
   thumbsUpClick() {
     if (this.isThumbsUp) {
