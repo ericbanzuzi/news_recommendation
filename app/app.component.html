@@ -30,7 +30,7 @@
             <div class="row" style="margin-top: 10px;"> <!-- Add some top margin for spacing -->
               <div class="col-xs-12">
                 <select class="form-control dropdown-minimal-width" #minPublishTimeStr="ngModel" ngModel name="minPublishTimeStr" id="minPublishTimeStr">
-                  <option value="Any time" selected>Any time</option>
+                  <option value="Any time"  >Any time</option>
                   <option value="Last year">Last year</option>
                   <option value="Last week">Last week</option>
                   <option value="Last day">Last day</option>
@@ -46,8 +46,8 @@
 
   <div class="row ng-scope">
     <div class="col-md-8 col-md-push-2">
-      <p class="search-results-count ">About 94 700 000 (0.39 sec.) results</p>
-      <section *ngFor="let article of articles" class="search-result-item">
+      <p class="search-results-count ">About {{searchResponse?.num_results}} ({{searchResponse?.delay_secs?.toFixed(2)}} seconds) results</p>
+      <section *ngFor="let article of searchResponse?.hits" class="search-result-item">
         <a class="image-link" href="{{article?.url}}" target="_blank"><img class="image" height="250px" width="400px" src="{{article?.image}}">
         </a>
         <div class="search-result-item-body">

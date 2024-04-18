@@ -1,11 +1,11 @@
 import {Component, OnInit} from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import {  HttpErrorResponse } from '@angular/common/http';
-import {Article} from "./article";
 import { environment } from '../environments/environment';
 import {ArticleService} from "./article.service";
 import {NgFor} from "@angular/common";
 import {FormsModule} from "@angular/forms";
+import {SearchResponse} from "./searchResponse";
 
 @Component({
   selector: 'app-root',
@@ -22,7 +22,7 @@ export class AppComponent implements OnInit {
   thumbsDownStatusClass = 'thumbs-down-no';
   isThumbsUp = false;
   isThumbsDown = false;
-  public articles: Article[] = [];
+  public searchResponse: SearchResponse | undefined;
   private apiServerUrl = environment.apiBaseUrl;
   AppComponent(){}
   ngOnInit() {
@@ -42,10 +42,10 @@ export class AppComponent implements OnInit {
       case "Last year":
         daysBack = 365;
     }
-    this.articleService.getArticles(query, daysBack).subscribe(
-      (response: Article[]) => {
-        this.articles = response;
-        console.log(this.articles);
+    this.articleService.getSearchResponse(query, daysBack).subscribe(
+      (response: SearchResponse) => {
+        this.searchResponse = response;
+        console.log(this.searchResponse?.hits);
       },
       (error: HttpErrorResponse) => {
         alert(error.message);
