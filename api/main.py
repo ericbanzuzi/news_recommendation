@@ -26,6 +26,7 @@ app.add_middleware(
 
 @app.get("/search/")
 async def read_items(user_id: Optional[str], query: str, days_back: int, page: int):
+    tic = time.time()
     if days_back == -1:
         min_publish_datetime = datetime.fromtimestamp(0, tz=timezone.utc)
     else:
@@ -46,7 +47,15 @@ async def read_items(user_id: Optional[str], query: str, days_back: int, page: i
             }
         }
     )
-    result = []
+    toc = time.time()
+    delay_secs = toc - tic
+    result = {
+        'hits': [],
+        'num_results': resp['hits']['total']['value'],
+        'delay_secs': delay_secs,
+    }
     for hit in resp['hits']['hits']:
-        result.append(hit['_source'])
+        article = {'article_id': hit['_id']}
+        article |= hit['_source']
+        result['hits'].append(article)
     return result
