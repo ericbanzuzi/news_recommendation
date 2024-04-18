@@ -5,11 +5,12 @@ import {Article} from "./article";
 import { environment } from '../environments/environment';
 import {ArticleService} from "./article.service";
 import {NgFor} from "@angular/common";
+import {FormsModule} from "@angular/forms";
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [RouterOutlet,NgFor],
+  imports: [RouterOutlet,NgFor,FormsModule],
   templateUrl: './app.component.html',
   styleUrl: './app.component.css'
 })
@@ -29,8 +30,19 @@ export class AppComponent implements OnInit {
 
   constructor(private articleService: ArticleService){}
 
-  search(query: string) {
-    this.articleService.getArticles(query).subscribe(
+  search(query: string, minPublishTimeStr: string) {
+    let daysBack = -1;
+    switch (minPublishTimeStr) {
+      case "Last day":
+        daysBack = 7;
+        break;
+      case "Last week":
+        daysBack = 7;
+        break;
+      case "Last year":
+        daysBack = 7;
+    }
+    this.articleService.getArticles(query, daysBack).subscribe(
       (response: Article[]) => {
         this.articles = response;
         console.log(this.articles);

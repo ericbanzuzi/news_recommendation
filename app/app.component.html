@@ -10,32 +10,34 @@
 
 </head>
 <body>
-<div class="container">
+<div class="container" ng-app ng-controller="Ctrl">
 
   <div class="container mt-5">
     <div class="row">
       <div class="col-md-8 col-md-offset-2">
         <div class="search-bar-container">
           <!-- Row for input and button -->
-          <div class="row">
-            <div class="col-xs-8 col-sm-10"> <!-- Adjust column sizes for responsiveness -->
-              <input type="text" class="form-control" placeholder="Search...">
+          <form>
+            <div class="row">
+              <div class="col-xs-8 col-sm-10"> <!-- Adjust column sizes for responsiveness -->
+                <input type="text" class="form-control" placeholder="Search..." #key="ngModel" ngModel name="key" id="searchName">
+              </div>
+              <div class="col-xs-4 col-sm-2"> <!-- Adjust column sizes for the button -->
+                <button type="button" class="btn btn-search btn-block" on-click="search(key.value, minPublishTimeStr.value)">Search</button>
+              </div>
             </div>
-            <div class="col-xs-4 col-sm-2"> <!-- Adjust column sizes for the button -->
-              <button type="button" class="btn btn-search btn-block" on-click="search('hey')">Search</button>
+            <!-- Row for dropdown, below input and button -->
+            <div class="row" style="margin-top: 10px;"> <!-- Add some top margin for spacing -->
+              <div class="col-xs-12">
+                <select class="form-control dropdown-minimal-width" #minPublishTimeStr="ngModel" ngModel name="minPublishTimeStr" id="minPublishTimeStr">
+                  <option value="Any time" selected>Any time</option>
+                  <option value="Last year">Last year</option>
+                  <option value="Last week">Last week</option>
+                  <option value="Last day">Last day</option>
+                </select>
+              </div>
             </div>
-          </div>
-          <!-- Row for dropdown, below input and button -->
-          <div class="row" style="margin-top: 10px;"> <!-- Add some top margin for spacing -->
-            <div class="col-xs-12">
-              <select class="form-control dropdown-minimal-width">
-                <option selected>Any time</option>
-                <option value="1">Last year</option>
-                <option value="2">Last week</option>
-                <option value="3">Last day</option>
-              </select>
-            </div>
-          </div>
+          </form>
         </div>
       </div>
     </div>
@@ -48,7 +50,7 @@
       <section *ngFor="let article of articles" class="search-result-item">
         <a class="image-link" href="#"><img class="image" height="250px" width="400px" src="{{article?.image}}">
         </a>
-        <div class="search-result-item-body" ng-app ng-controller="Ctrl">
+        <div class="search-result-item-body">
           <div class="row">
             <div class="col-sm-9">
               <h4 class="search-result-item-heading"><a href="#">Taylor Swift threatens to sue student who tracks her private jet</a></h4>

@@ -10,9 +10,9 @@ export class ArticleService {
 
   constructor(private http: HttpClient){}
 
-  public getArticles(query: string): Observable<Article[]> {
+  public getArticles(query: string, daysBack: number): Observable<Article[]> {
     console.log(`${this.apiServerUrl}/search/?user_id=erik&query=${query}&min_publish_time=0&page=0`)
-    return this.http.get<Article[]>(`${this.apiServerUrl}/search/?user_id=erik&query=${query}&min_publish_time=0&page=0`);
+    return this.http.get<Article[]>(`${this.apiServerUrl}/search/?user_id=erik&query=${query}&days_back=${daysBack}&page=0`);
   }
 
   public provideFeedbackForArticle(article: Article): Observable<Article> {
