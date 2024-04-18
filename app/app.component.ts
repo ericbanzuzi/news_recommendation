@@ -18,10 +18,8 @@ import {SearchResponse} from "./searchResponse";
 
 export class AppComponent implements OnInit {
   title = 'SearchEnginesUI';
-  thumbsUpStatusClass = 'thumbs-up-no';
-  thumbsDownStatusClass = 'thumbs-down-no';
-  isThumbsUp = false;
-  isThumbsDown = false;
+  thumbsUpArticlesIdsSet = new Set();
+  thumbsDownArticlesIdsSet = new Set();
   public searchResponse: SearchResponse | undefined;
   private apiServerUrl = environment.apiBaseUrl;
   AppComponent(){}
@@ -44,8 +42,15 @@ export class AppComponent implements OnInit {
     }
     this.articleService.getSearchResponse(query, daysBack).subscribe(
       (response: SearchResponse) => {
+        for (let article of response.hits) {
+          if (article.liked) {
+            this.thumbsUpArticlesIdsSet.add(article.article_id);
+          }
+          if (article.disliked) {
+            this.thumbsDownArticlesIdsSet.add(article.article_id);
+          }
+        }
         this.searchResponse = response;
-        console.log(this.searchResponse?.hits);
       },
       (error: HttpErrorResponse) => {
         alert(error.message);
@@ -53,31 +58,35 @@ export class AppComponent implements OnInit {
     );
   }
 
-  thumbsUpClick() {
-    if (this.isThumbsUp) {
-      this.isThumbsUp = false;
-      this.thumbsUpStatusClass = 'thumbs-up-no';
-      this.isThumbsDown = false;
-      this.thumbsDownStatusClass = 'thumbs-down-no';
+  getThumbsUpStatusClass(article_id: string | undefined) {
+    if (this.thumbsUpArticlesIdsSet.has(article_id)) {
+      return 'thumbs-up-yes';
+    }
+    return 'thumbs-up-no';
+  }
+
+  getThumbsDownStatusClass(article_id: string | undefined) {
+    if (this.thumbsDownArticlesIdsSet.has(article_id)) {
+      return 'thumbs-down-yes';
+    }
+    return 'thumbs-down-no';
+  }
+
+  thumbsUpClick(article_id: string | undefined) {
+    if (this.thumbsUpArticlesIdsSet.has(article_id)) {
+      this.thumbsUpArticlesIdsSet.delete(article_id);
     } else {
-      this.isThumbsUp = true;
-      this.thumbsUpStatusClass = 'thumbs-up-yes';
-      this.isThumbsDown = false;
-      this.thumbsDownStatusClass = 'thumbs-down-no';
+      this.thumbsDownArticlesIdsSet.delete(article_id);
+      this.thumbsUpArticlesIdsSet.add(article_id);
     }
   }
 
-  thumbsDownClick() {
-    if (this.isThumbsDown) {
-      this.isThumbsDown = false;
-      this.thumbsDownStatusClass = 'thumbs-down-no';
-      this.isThumbsUp = false;
-      this.thumbsUpStatusClass = 'thumbs-up-no';
+  thumbsDownClick(article_id: string | undefined) {
+    if (this.thumbsDownArticlesIdsSet.has(article_id)) {
+      this.thumbsDownArticlesIdsSet.delete(article_id);
     } else {
-      this.isThumbsDown = true;
-      this.thumbsDownStatusClass = 'thumbs-down-yes';
-      this.isThumbsUp = false;
-      this.thumbsUpStatusClass = 'thumbs-up-no';
+      this.thumbsUpArticlesIdsSet.delete(article_id);
+      this.thumbsDownArticlesIdsSet.add(article_id);
     }
   }
 

@@ -30,7 +30,7 @@
             <div class="row" style="margin-top: 10px;"> <!-- Add some top margin for spacing -->
               <div class="col-xs-12">
                 <select class="form-control dropdown-minimal-width" #minPublishTimeStr="ngModel" ngModel name="minPublishTimeStr" id="minPublishTimeStr">
-                  <option value="Any time"  >Any time</option>
+                  <option value="Any time">Any time</option>
                   <option value="Last year">Last year</option>
                   <option value="Last week">Last week</option>
                   <option value="Last day">Last day</option>
@@ -59,8 +59,8 @@
             </div>
           </div>
           <div class="like-dislike-container">
-            <span class="fa fa-thumbs-up {{this.thumbsUpStatusClass}}" on-click="thumbsUpClick()"></span>
-            <span class="fa fa-thumbs-down {{this.thumbsDownStatusClass}}" on-click="thumbsDownClick()"></span>
+            <span class="fa fa-thumbs-up {{getThumbsUpStatusClass(article?.article_id)}}" on-click="thumbsUpClick(article?.article_id)"></span>
+            <span class="fa fa-thumbs-down {{getThumbsDownStatusClass(article?.article_id)}}" on-click="thumbsDownClick(article?.article_id)"></span>
           </div>
         </div>
 
