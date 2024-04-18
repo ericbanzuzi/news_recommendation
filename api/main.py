@@ -1,4 +1,6 @@
+import time
 from typing import Optional
+from datetime import datetime, timezone
 
 from fastapi import FastAPI
 from elasticsearch import Elasticsearch
@@ -23,13 +25,26 @@ app.add_middleware(
 
 
 @app.get("/search/")
-async def read_items(user_id: Optional[str], query: str, min_publish_time: int, page: int):
+async def read_items(user_id: Optional[str], query: str, days_back: int, page: int):
+    if days_back == -1:
+        min_publish_datetime = datetime.fromtimestamp(0, tz=timezone.utc)
+    else:
+        min_publish_datetime = datetime.fromtimestamp(int(time.time()) - days_back * 24 * 60 * 60, tz=timezone.utc)
     client = Elasticsearch("http://localhost:9200/")
     resp = client.search(
         index="articles",
         from_=page * settings.page_size,
         size=settings.page_size,
-        body={"query": {"match": {"content": query}}},
+        body={
+            "query": {
+                "bool": {
+                    "must": [
+                        {"match": {"content": query}},
+                        {"range": {"date": {"gte": min_publish_datetime.isoformat()}}}
+                    ]
+                }
+            }
+        }
     )
     result = []
     for hit in resp['hits']['hits']:
