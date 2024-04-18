@@ -45,8 +45,8 @@
   <div class="row ng-scope">
     <div class="col-md-8 col-md-push-2">
       <p class="search-results-count ">About 94 700 000 (0.39 sec.) results</p>
-      <section class="search-result-item">
-        <a class="image-link" href="#"><img class="image" height="250px" width="400px" src="https://t3.ftcdn.net/jpg/01/75/17/46/360_F_175174631_fZWpQKTkvuuXxZN6rz7x7mzjwCrhJq0o.jpg">
+      <section *ngFor="let article of articles" class="search-result-item">
+        <a class="image-link" href="#"><img class="image" height="250px" width="400px" src="{{article?.image}}">
         </a>
         <div class="search-result-item-body" ng-app ng-controller="Ctrl">
           <div class="row">
@@ -63,45 +63,7 @@
         </div>
 
       </section>
-      <section class="search-result-item">
-        <a class="image-link" href="#"><img class="image" height="250px" width="400px" src="https://t3.ftcdn.net/jpg/01/75/17/46/360_F_175174631_fZWpQKTkvuuXxZN6rz7x7mzjwCrhJq0o.jpg">
-        </a>
-        <div class="search-result-item-body">
-          <div class="row">
-            <div class="col-sm-9">
-              <h4 class="search-result-item-heading"><a href="#">Taylor Swift threatens to sue student who tracks her private jet</a></h4>
-              <p class="info">New York, NY 20188</p>
-              <p class="description">Not just usual Metro. But something bigger. Not just usual widgets, but real widgets. Not just yet another admin template, but next generation admin template.</p>
-            </div>
-          </div>
-        </div>
-      </section>
-      <section class="search-result-item">
-        <a class="image-link" href="#"><img class="image" height="250px" width="400px" src="https://t3.ftcdn.net/jpg/01/75/17/46/360_F_175174631_fZWpQKTkvuuXxZN6rz7x7mzjwCrhJq0o.jpg">
-        </a>
-        <div class="search-result-item-body">
-          <div class="row">
-            <div class="col-sm-9">
-              <h4 class="search-result-item-heading"><a href="#">Taylor Swift threatens to sue student who tracks her private jet</a></h4>
-              <p class="info">New York, NY 20188</p>
-              <p class="description">Not just usual Metro. But something bigger. Not just usual widgets, but real widgets. Not just yet another admin template, but next generation admin template.</p>
-            </div>
-          </div>
-        </div>
-      </section>
-      <section class="search-result-item">
-        <a class="image-link" href="#"><img class="image" height="250px" width="400px" src="https://t3.ftcdn.net/jpg/01/75/17/46/360_F_175174631_fZWpQKTkvuuXxZN6rz7x7mzjwCrhJq0o.jpg">
-        </a>
-        <div class="search-result-item-body">
-          <div class="row">
-            <div class="col-sm-9">
-              <h4 class="search-result-item-heading"><a href="#">Taylor Swift threatens to sue student who tracks her private jet</a></h4>
-              <p class="info">New York, NY 20188</p>
-              <p class="description">Not just usual Metro. But something bigger. Not just usual widgets, but real widgets. Not just yet another admin template, but next generation admin template.</p>
-            </div>
-          </div>
-        </div>
-      </section>
+
       <div class="text-align-center">
         <ul class="pagination pagination-sm">
           <li class="disabled"><a href="#">Prev</a>

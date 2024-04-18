@@ -4,11 +4,12 @@ import {  HttpErrorResponse } from '@angular/common/http';
 import {Article} from "./article";
 import { environment } from '../environments/environment';
 import {ArticleService} from "./article.service";
+import {NgFor} from "@angular/common";
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [RouterOutlet],
+  imports: [RouterOutlet,NgFor],
   templateUrl: './app.component.html',
   styleUrl: './app.component.css'
 })
