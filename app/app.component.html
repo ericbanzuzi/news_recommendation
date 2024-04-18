@@ -48,14 +48,14 @@
     <div class="col-md-8 col-md-push-2">
       <p class="search-results-count ">About 94 700 000 (0.39 sec.) results</p>
       <section *ngFor="let article of articles" class="search-result-item">
-        <a class="image-link" href="#"><img class="image" height="250px" width="400px" src="{{article?.image}}">
+        <a class="image-link" href="{{article?.url}}" target="_blank"><img class="image" height="250px" width="400px" src="{{article?.image}}">
         </a>
         <div class="search-result-item-body">
           <div class="row">
             <div class="col-sm-9">
-              <h4 class="search-result-item-heading"><a href="#">Taylor Swift threatens to sue student who tracks her private jet</a></h4>
-              <p class="info">New York, NY 20188</p>
-              <p class="description">Not just usual Metro. But something bigger. Not just usual widgets, but real widgets. Not just yet another admin template, but next generation admin template.</p>
+              <h4 class="search-result-item-heading"><a href="{{article?.url}}" target="_blank">{{article?.title}}</a></h4>
+              <p class="info">{{article?.date?.substring(8, 10) + "/" + article?.date?.substring(5, 7) + "/" + article?.date?.substring(0, 4) + " " + article?.date?.substring(11, 16)}}</p>
+              <p class="description">{{article?.content?.substring(0, 300) + '...'}}</p>
             </div>
           </div>
           <div class="like-dislike-container">

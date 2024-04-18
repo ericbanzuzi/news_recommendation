@@ -34,13 +34,13 @@ export class AppComponent implements OnInit {
     let daysBack = -1;
     switch (minPublishTimeStr) {
       case "Last day":
-        daysBack = 7;
+        daysBack = 1;
         break;
       case "Last week":
         daysBack = 7;
         break;
       case "Last year":
-        daysBack = 7;
+        daysBack = 365;
     }
     this.articleService.getArticles(query, daysBack).subscribe(
       (response: Article[]) => {
