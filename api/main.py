@@ -55,7 +55,11 @@ async def read_items(user_id: Optional[str], query: str, days_back: int, page: i
         'delay_secs': delay_secs,
     }
     for hit in resp['hits']['hits']:
-        article = {'article_id': hit['_id']}
+        article = {
+            'article_id': hit['_id'],
+            'liked': True,
+            'disliked': False,
+        }
         article |= hit['_source']
         result['hits'].append(article)
     return result
