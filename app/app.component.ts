@@ -73,20 +73,52 @@ export class AppComponent implements OnInit {
   }
 
   thumbsUpClick(article_id: string | undefined) {
-    if (this.thumbsUpArticlesIdsSet.has(article_id)) {
-      this.thumbsUpArticlesIdsSet.delete(article_id);
-    } else {
-      this.thumbsDownArticlesIdsSet.delete(article_id);
-      this.thumbsUpArticlesIdsSet.add(article_id);
+    if (article_id) {
+      if (this.thumbsUpArticlesIdsSet.has(article_id)) {
+        this.articleService.provideFeedbackForArticle(article_id, 'delete_like').subscribe(
+          (response: boolean) => {
+            this.thumbsUpArticlesIdsSet.delete(article_id);
+          },
+          (error: HttpErrorResponse) => {
+            alert(error.message);
+          }
+        );
+      } else {
+        this.articleService.provideFeedbackForArticle(article_id, 'add_like').subscribe(
+          (response: boolean) => {
+            this.thumbsDownArticlesIdsSet.delete(article_id);
+            this.thumbsUpArticlesIdsSet.add(article_id);
+          },
+          (error: HttpErrorResponse) => {
+            alert(error.message);
+          }
+        );
+      }
     }
   }
 
   thumbsDownClick(article_id: string | undefined) {
-    if (this.thumbsDownArticlesIdsSet.has(article_id)) {
-      this.thumbsDownArticlesIdsSet.delete(article_id);
-    } else {
-      this.thumbsUpArticlesIdsSet.delete(article_id);
-      this.thumbsDownArticlesIdsSet.add(article_id);
+    if (article_id) {
+      if (this.thumbsDownArticlesIdsSet.has(article_id)) {
+        this.articleService.provideFeedbackForArticle(article_id, 'delete_dislike').subscribe(
+          (response: boolean) => {
+            this.thumbsDownArticlesIdsSet.delete(article_id);
+          },
+          (error: HttpErrorResponse) => {
+            alert(error.message);
+          }
+        );
+      } else {
+        this.articleService.provideFeedbackForArticle(article_id, 'add_dislike').subscribe(
+          (response: boolean) => {
+            this.thumbsUpArticlesIdsSet.delete(article_id);
+            this.thumbsDownArticlesIdsSet.add(article_id);
+          },
+          (error: HttpErrorResponse) => {
+            alert(error.message);
+          }
+        );
+      }
     }
   }
 
