@@ -7,6 +7,8 @@ from elasticsearch import Elasticsearch
 from pydantic_settings import BaseSettings
 from fastapi.middleware.cors import CORSMiddleware
 
+from .models import UserFeedback
+
 
 class Settings(BaseSettings):
     page_size: int = 10
@@ -24,8 +26,8 @@ app.add_middleware(
 )
 
 
-@app.get("/search/")
-async def read_items(user_id: Optional[str], query: str, days_back: int, page: int):
+@app.get("/search")
+async def search(user_id: Optional[str], query: str, days_back: int, page: int):
     tic = time.time()
     if days_back == -1:
         min_publish_datetime = datetime.fromtimestamp(0, tz=timezone.utc)
@@ -63,3 +65,9 @@ async def read_items(user_id: Optional[str], query: str, days_back: int, page: i
         article |= hit['_source']
         result['hits'].append(article)
     return result
+
+
+@app.post("/provideFeedback")
+async def provide_feedback(user_feedback: UserFeedback):
+    print(user_feedback.model_dump())
+    return True
