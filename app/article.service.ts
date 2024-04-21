@@ -16,8 +16,8 @@ export class ArticleService {
     return this.http.get<SearchResponse>(`${this.apiServerUrl}/search?user_id=erik&query=${query}&days_back=${daysBack}&page=0`);
   }
 
-  public provideFeedbackForArticle(article_id: string, feedback: string): Observable<boolean> {
-    const userFeedback = {user_id: 'erik', article_id: article_id, feedback: feedback};
+  public provideFeedbackForArticle(article_id: string, action: string): Observable<boolean> {
+    const userFeedback = {user_id: 'erik', article_id: article_id, action: action};
     console.log(userFeedback);
     return this.http.post<boolean>(`${this.apiServerUrl}/provideFeedback`, userFeedback);
   }
