@@ -8,6 +8,7 @@ from pydantic_settings import BaseSettings
 from fastapi.middleware.cors import CORSMiddleware
 
 from .models import UserFeedback
+from .users_preferences_handling import load_user_preferences, get_updated_user_preferences, save_user_preferences
 
 
 class Settings(BaseSettings):
@@ -56,11 +57,13 @@ async def search(user_id: Optional[str], query: str, days_back: int, page: int):
         'num_results': resp['hits']['total']['value'],
         'delay_secs': delay_secs,
     }
+    user_preferences = load_user_preferences(user_id)
     for hit in resp['hits']['hits']:
+        article_id = hit['_id']
         article = {
-            'article_id': hit['_id'],
-            'liked': True,
-            'disliked': False,
+            'article_id': article_id,
+            'liked': (article_id in user_preferences.liked_articles_ids),
+            'disliked': (article_id in user_preferences.disliked_articles_ids),
         }
         article |= hit['_source']
         result['hits'].append(article)
@@ -69,5 +72,7 @@ async def search(user_id: Optional[str], query: str, days_back: int, page: int):
 
 @app.post("/provideFeedback")
 async def provide_feedback(user_feedback: UserFeedback):
-    print(user_feedback.model_dump())
+    user_preferences = load_user_preferences(user_feedback.user_id)
+    updated_user_preferences = get_updated_user_preferences(user_preferences, user_feedback)
+    save_user_preferences(user_feedback.user_id, updated_user_preferences)
     return True
