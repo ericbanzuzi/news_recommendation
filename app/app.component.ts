@@ -122,6 +122,14 @@ export class AppComponent implements OnInit {
     }
   }
 
+  getSearchResultsCountText() {
+    if (this.searchResponse) {
+      return `About ${this.searchResponse?.num_results} (${this.searchResponse?.delay_secs?.toFixed(2)} seconds) results`;
+    }
+    else {
+      return "";
+    }
+  }
 
   protected readonly self = self;
 }

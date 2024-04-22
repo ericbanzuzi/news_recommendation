@@ -46,7 +46,7 @@
 
   <div class="row ng-scope">
     <div class="col-md-8 col-md-push-2">
-      <p class="search-results-count ">About {{searchResponse?.num_results}} ({{searchResponse?.delay_secs?.toFixed(2)}} seconds) results</p>
+      <p class="search-results-count">{{getSearchResultsCountText()}}</p>
       <section *ngFor="let article of searchResponse?.hits" class="search-result-item">
         <a class="image-link" href="{{article?.url}}" target="_blank"><img class="image" height="250px" width="400px" src="{{article?.image}}">
         </a>
