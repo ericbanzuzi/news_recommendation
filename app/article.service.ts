@@ -12,8 +12,8 @@ export class ArticleService {
 
   constructor(private http: HttpClient){}
 
-  public getSearchResponse(query: string, daysBack: number): Observable<SearchResponse> {
-    return this.http.get<SearchResponse>(`${this.apiServerUrl}/search?user_id=erik&query=${query}&days_back=${daysBack}&page=0`);
+  public getSearchResponse(query: string, daysBack: number, pageIdx: number): Observable<SearchResponse> {
+    return this.http.get<SearchResponse>(`${this.apiServerUrl}/search?user_id=erik&query=${query}&days_back=${daysBack}&page=${pageIdx}`);
   }
 
   public provideFeedbackForArticle(article_id: string, action: string): Observable<boolean> {

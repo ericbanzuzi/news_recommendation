@@ -3,9 +3,11 @@ import { RouterOutlet } from '@angular/router';
 import {  HttpErrorResponse } from '@angular/common/http';
 import { environment } from '../environments/environment';
 import {ArticleService} from "./article.service";
+import {Page} from "./page";
 import {NgFor} from "@angular/common";
 import {FormsModule} from "@angular/forms";
 import {SearchResponse} from "./searchResponse";
+import {min} from "rxjs";
 
 @Component({
   selector: 'app-root',
@@ -20,7 +22,11 @@ export class AppComponent implements OnInit {
   title = 'SearchEnginesUI';
   thumbsUpArticlesIdsSet = new Set();
   thumbsDownArticlesIdsSet = new Set();
-  public searchResponse: SearchResponse | undefined;
+  lastSearchQuery: string | null = null;
+  lastSearchMinPublishTimeStr: string | null = null;
+  searchResponse: SearchResponse | null = null;
+  currentPageIdx: number | null = null;
+  private pageSize = environment.pageSize;
   private apiServerUrl = environment.apiBaseUrl;
   AppComponent(){}
   ngOnInit() {
@@ -28,7 +34,11 @@ export class AppComponent implements OnInit {
 
   constructor(private articleService: ArticleService){}
 
-  search(query: string, minPublishTimeStr: string) {
+  search(query: string | null, minPublishTimeStr: string | null, pageIdx: number) {
+    console.log('pif ' + query + ' ' + minPublishTimeStr + ' ' + pageIdx);
+    if (query === null || minPublishTimeStr === null) {
+      return;
+    }
     let daysBack = -1;
     switch (minPublishTimeStr) {
       case "Last day":
@@ -40,8 +50,10 @@ export class AppComponent implements OnInit {
       case "Last year":
         daysBack = 365;
     }
-    this.articleService.getSearchResponse(query, daysBack).subscribe(
+    this.articleService.getSearchResponse(query, daysBack, pageIdx).subscribe(
       (response: SearchResponse) => {
+        this.lastSearchQuery = query;
+        this.lastSearchMinPublishTimeStr = minPublishTimeStr;
         for (let article of response.hits) {
           if (article.liked) {
             this.thumbsUpArticlesIdsSet.add(article.article_id);
@@ -51,6 +63,7 @@ export class AppComponent implements OnInit {
           }
         }
         this.searchResponse = response;
+        this.currentPageIdx = pageIdx;
       },
       (error: HttpErrorResponse) => {
         alert(error.message);
@@ -129,6 +142,70 @@ export class AppComponent implements OnInit {
     else {
       return "";
     }
+  }
+
+  getPages() {
+    const pages: Page[] = [];
+    if (this.searchResponse !== null && this.currentPageIdx !== null) {
+      const numAvailablePages = Math.ceil(this.searchResponse.num_results / this.pageSize);
+      pages.push({
+        text: 'Prev',
+        isActive: false,
+        isDisabled: (this.currentPageIdx == 0),
+        pageIdx: this.currentPageIdx - 1
+      });
+      pages.push({
+        text: '1',
+        isActive: (this.currentPageIdx == 0),
+        isDisabled: false,
+        pageIdx: 0
+      });
+      if (Math.min(this.currentPageIdx + environment.currentPageRightWindow + 1, numAvailablePages) <= environment.maxPagesToDisplay) {
+        for (let pageIdx = 1; pageIdx < Math.min(numAvailablePages, environment.maxPagesToDisplay); ++pageIdx) {
+          pages.push({
+            text: `${pageIdx + 1}`,
+            isActive: (this.currentPageIdx == pageIdx),
+            isDisabled: false,
+            pageIdx: pageIdx
+          });
+        }
+      }
+      else {
+        pages.push({
+          text: '...',
+          isActive: false,
+          isDisabled: false,
+          pageIdx: 1
+        });
+        const startPageIdxAfterDots = this.currentPageIdx + environment.currentPageRightWindow - environment.maxPagesToDisplay + 3;
+        for (let pageIdx = startPageIdxAfterDots; pageIdx <= this.currentPageIdx + environment.currentPageRightWindow; ++pageIdx) {
+          pages.push({
+            text: `${pageIdx + 1}`,
+            isActive: (this.currentPageIdx == pageIdx),
+            isDisabled: false,
+            pageIdx: pageIdx
+          });
+        }
+      }
+      pages.push({
+        text: 'Next',
+        isActive: false,
+        isDisabled: (this.currentPageIdx == numAvailablePages - 1),
+        pageIdx: this.currentPageIdx + 1
+      });
+    }
+    return pages;
+  }
+
+  getPageClassString(page: Page) {
+    const pageClassesStrings: string[] = [];
+    if (page.isActive) {
+      pageClassesStrings.push('active');
+    }
+    if (page.isDisabled) {
+      pageClassesStrings.push('disabled');
+    }
+    return pageClassesStrings.join(' ');
   }
 
   protected readonly self = self;

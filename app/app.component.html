@@ -23,7 +23,7 @@
                 <input type="text" class="form-control" placeholder="Search..." #key="ngModel" ngModel name="key" id="searchName">
               </div>
               <div class="col-xs-4 col-sm-2"> <!-- Adjust column sizes for the button -->
-                <button type="button" class="btn btn-search btn-block" on-click="search(key.value, minPublishTimeStr.value)">Search</button>
+                <button type="button" class="btn btn-search btn-block" on-click="search(key.value, minPublishTimeStr.value, 0)">Search</button>
               </div>
             </div>
             <!-- Row for dropdown, below input and button -->
@@ -67,21 +67,8 @@
       </section>
 
       <div class="text-align-center">
-        <ul class="pagination pagination-sm">
-          <li class="disabled"><a href="#">Prev</a>
-          </li>
-          <li class="active"><a href="#">1</a>
-          </li>
-          <li><a href="#">2</a>
-          </li>
-          <li><a href="#">3</a>
-          </li>
-          <li><a href="#">4</a>
-          </li>
-          <li><a href="#">5</a>
-          </li>
-          <li><a href="#">Next</a>
-          </li>
+        <ul *ngFor="let page of getPages()" class="pagination pagination-sm">
+          <li class="{{getPageClassString(page)}}"><a href="#" on-click="search(lastSearchQuery, lastSearchMinPublishTimeStr, page.pageIdx)">{{page.text}}</a></li>
         </ul>
       </div>
     </div>
