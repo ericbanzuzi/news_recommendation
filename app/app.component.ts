@@ -19,6 +19,7 @@ import {min} from "rxjs";
 
 
 export class AppComponent implements OnInit {
+  userId: string | null = null;
   title = 'SearchEnginesUI';
   thumbsUpArticlesIdsSet = new Set();
   thumbsDownArticlesIdsSet = new Set();
@@ -32,11 +33,14 @@ export class AppComponent implements OnInit {
   ngOnInit() {
   }
 
-  constructor(private articleService: ArticleService){}
+  constructor(private articleService: ArticleService){
+    if (this.userId === null) {
+      this.userId = prompt('Enter your username:');
+    }
+  }
 
   search(query: string | null, minPublishTimeStr: string | null, pageIdx: number) {
-    console.log('pif ' + query + ' ' + minPublishTimeStr + ' ' + pageIdx);
-    if (query === null || minPublishTimeStr === null) {
+    if (query === null || minPublishTimeStr === null || this.userId === null) {
       return;
     }
     let daysBack = -1;
@@ -50,7 +54,7 @@ export class AppComponent implements OnInit {
       case "Last year":
         daysBack = 365;
     }
-    this.articleService.getSearchResponse(query, daysBack, pageIdx).subscribe(
+    this.articleService.getSearchResponse(this.userId, query, daysBack, pageIdx).subscribe(
       (response: SearchResponse) => {
         this.lastSearchQuery = query;
         this.lastSearchMinPublishTimeStr = minPublishTimeStr;
@@ -86,9 +90,9 @@ export class AppComponent implements OnInit {
   }
 
   thumbsUpClick(article_id: string | undefined) {
-    if (article_id) {
+    if (article_id && this.userId !== null) {
       if (this.thumbsUpArticlesIdsSet.has(article_id)) {
-        this.articleService.provideFeedbackForArticle(article_id, 'delete_like').subscribe(
+        this.articleService.provideFeedbackForArticle(this.userId, article_id, 'delete_like').subscribe(
           (response: boolean) => {
             this.thumbsUpArticlesIdsSet.delete(article_id);
           },
@@ -97,7 +101,7 @@ export class AppComponent implements OnInit {
           }
         );
       } else {
-        this.articleService.provideFeedbackForArticle(article_id, 'add_like').subscribe(
+        this.articleService.provideFeedbackForArticle(this.userId, article_id, 'add_like').subscribe(
           (response: boolean) => {
             this.thumbsDownArticlesIdsSet.delete(article_id);
             this.thumbsUpArticlesIdsSet.add(article_id);
@@ -111,9 +115,9 @@ export class AppComponent implements OnInit {
   }
 
   thumbsDownClick(article_id: string | undefined) {
-    if (article_id) {
+    if (article_id && this.userId !== null) {
       if (this.thumbsDownArticlesIdsSet.has(article_id)) {
-        this.articleService.provideFeedbackForArticle(article_id, 'delete_dislike').subscribe(
+        this.articleService.provideFeedbackForArticle(this.userId, article_id, 'delete_dislike').subscribe(
           (response: boolean) => {
             this.thumbsDownArticlesIdsSet.delete(article_id);
           },
@@ -122,7 +126,7 @@ export class AppComponent implements OnInit {
           }
         );
       } else {
-        this.articleService.provideFeedbackForArticle(article_id, 'add_dislike').subscribe(
+        this.articleService.provideFeedbackForArticle(this.userId, article_id, 'add_dislike').subscribe(
           (response: boolean) => {
             this.thumbsUpArticlesIdsSet.delete(article_id);
             this.thumbsDownArticlesIdsSet.add(article_id);
