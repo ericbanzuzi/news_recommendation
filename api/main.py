@@ -26,6 +26,66 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+@app.get("/recomend")
+async def search(user_id: Optional[str], page: int):
+    tic = time.time()
+    client = Elasticsearch("http://localhost:9200/")
+    print("_________________!22222222222222222222222222222222222")
+
+    user_preferences = load_user_preferences(user_id)
+
+    print("_________________!11111111111111111111111111111111111111")
+    query = {
+        "query": {
+            "more_like_this": {
+                "fields": [ "content"],  # Fields to consider
+                "like": [
+                    {
+                        "_index": "articles",
+                        "_id": doc_id
+                    }
+                    for doc_id in user_preferences.liked_articles_ids
+                ],
+                "unlike": [
+                    {
+                        "_index": "articles",
+                        "_id": doc_id
+                    }
+                    for doc_id in user_preferences.disliked_articles_ids
+                ],
+                "min_term_freq": 1,  # Minimum term frequency
+                "min_doc_freq": 1,  # Minimum document frequency
+                "include": True  # Include the liked document in the results
+            }
+        }
+    }
+    print("here1")
+
+    # Execute the query
+    resp = client.search(index="articles", body=query)
+    print("here2")
+
+    toc = time.time()
+    delay_secs = toc - tic
+    # Process the result
+    result = {
+        'hits': [],
+        'num_results': resp['hits']['total']['value'],
+        'delay_secs': delay_secs,
+    }
+    print( len(resp['hits']['hits']))
+    for hit in resp['hits']['hits']:
+        article_id = hit['_id']
+        if article_id not in user_preferences.disliked_articles_ids:
+            article = {
+                'article_id': article_id,
+                'liked': (article_id in user_preferences.liked_articles_ids),
+                'disliked': (article_id in user_preferences.disliked_articles_ids),
+            }
+            article |= hit['_source']
+            result['hits'].append(article)
+    return result
+
 
 @app.get("/search")
 async def search(user_id: Optional[str], query: str, days_back: int, page: int):
@@ -60,6 +120,8 @@ async def search(user_id: Optional[str], query: str, days_back: int, page: int):
     user_preferences = load_user_preferences(user_id)
     for hit in resp['hits']['hits']:
         article_id = hit['_id']
+        if article_id in user_preferences.liked_articles_ids:
+            print(article_id)
         article = {
             'article_id': article_id,
             'liked': (article_id in user_preferences.liked_articles_ids),
