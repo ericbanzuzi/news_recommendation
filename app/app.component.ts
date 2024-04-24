@@ -19,6 +19,7 @@ import {min} from "rxjs";
 
 
 export class AppComponent implements OnInit {
+  minPublishTimeStr: string = 'Any time';
   userId: string | null = null;
   title = 'SearchEnginesUI';
   thumbsUpArticlesIdsSet = new Set();
@@ -39,12 +40,16 @@ export class AppComponent implements OnInit {
     }
   }
 
-  search(query: string | null, minPublishTimeStr: string | null, pageIdx: number) {
-    if (query === null || minPublishTimeStr === null || this.userId === null) {
+  setMinPublishTimeStr(minPublishTimeStr: string){
+    this.minPublishTimeStr = minPublishTimeStr;
+  }
+
+  search(query: string | null, pageIdx: number) {
+    if (query === null || this.userId === null) {
       return;
     }
     let daysBack = -1;
-    switch (minPublishTimeStr) {
+    switch (this.minPublishTimeStr) {
       case "Last day":
         daysBack = 1;
         break;
@@ -57,7 +62,7 @@ export class AppComponent implements OnInit {
     this.articleService.getSearchResponse(this.userId, query, daysBack, pageIdx).subscribe(
       (response: SearchResponse) => {
         this.lastSearchQuery = query;
-        this.lastSearchMinPublishTimeStr = minPublishTimeStr;
+        this.lastSearchMinPublishTimeStr = this.minPublishTimeStr;
         for (let article of response.hits) {
           if (article.liked) {
             this.thumbsUpArticlesIdsSet.add(article.article_id);
