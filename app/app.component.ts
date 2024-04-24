@@ -32,12 +32,33 @@ export class AppComponent implements OnInit {
   private apiServerUrl = environment.apiBaseUrl;
   AppComponent(){}
   ngOnInit() {
+
   }
 
   constructor(private articleService: ArticleService){
-    if (this.userId === null) {
+    while (this.userId === null) {
       this.userId = prompt('Enter your username:');
+      alert(this.userId )
+
     }
+    alert(this.userId )
+    this.articleService.getRecomendation(this.userId, 1).subscribe(
+      (response: SearchResponse) => {
+        for (let article of response.hits) {
+          if (article.liked) {
+            this.thumbsUpArticlesIdsSet.add(article.article_id);
+          }
+          if (article.disliked) {
+            this.thumbsDownArticlesIdsSet.add(article.article_id);
+          }
+        }
+        this.searchResponse = response;
+        this.currentPageIdx = 0;
+      },
+      (error: HttpErrorResponse) => {
+        alert(error.message);
+      }
+    );
   }
 
   setMinPublishTimeStr(minPublishTimeStr: string){

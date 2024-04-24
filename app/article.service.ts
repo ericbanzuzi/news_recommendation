@@ -12,6 +12,11 @@ export class ArticleService {
 
   constructor(private http: HttpClient){}
 
+  public getRecomendation(userId: string, pageIdx: number): Observable<SearchResponse> {
+    alert("skata")
+    return this.http.get<SearchResponse>(`${this.apiServerUrl}/recomend?user_id=${userId}&page=${pageIdx}`);
+  }
+
   public getSearchResponse(userId: string, query: string, daysBack: number, pageIdx: number): Observable<SearchResponse> {
     return this.http.get<SearchResponse>(`${this.apiServerUrl}/search?user_id=${userId}&query=${query}&days_back=${daysBack}&page=${pageIdx}`);
   }
