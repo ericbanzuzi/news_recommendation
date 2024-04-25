@@ -58,7 +58,7 @@
             <div class="col-sm-9">
               <h4 class="search-result-item-heading"><a href="{{article?.url}}" target="_blank">{{article?.title}}</a></h4>
               <p class="info">{{article?.date?.substring(8, 10) + "/" + article?.date?.substring(5, 7) + "/" + article?.date?.substring(0, 4) + " " + article?.date?.substring(11, 16)}}</p>
-              <p class="description">{{article?.content?.substring(0, 300) + '...'}}</p>
+              <p class="description">{{article?.summary?.replaceAll(" .", ".")}}</p>
             </div>
           </div>
           <div class="like-dislike-container">

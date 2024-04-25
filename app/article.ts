@@ -7,4 +7,5 @@ export interface Article {
   image: string;
   date: string;
   title: string;
+  summary: string;
 }
