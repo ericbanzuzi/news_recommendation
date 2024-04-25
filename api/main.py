@@ -26,8 +26,9 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-@app.get("/recomend")
-async def search(user_id: Optional[str], page: int):
+
+@app.get("/recommend")
+async def recommend(user_id: Optional[str], page: int):
     tic = time.time()
     client = Elasticsearch("http://localhost:9200/")
     print("_________________!22222222222222222222222222222222222")
@@ -38,7 +39,7 @@ async def search(user_id: Optional[str], page: int):
     query = {
         "query": {
             "more_like_this": {
-                "fields": [ "content"],  # Fields to consider
+                "fields": ["content"],  # Fields to consider
                 "like": [
                     {
                         "_index": "articles",
@@ -73,7 +74,7 @@ async def search(user_id: Optional[str], page: int):
         'num_results': resp['hits']['total']['value'],
         'delay_secs': delay_secs,
     }
-    print( len(resp['hits']['hits']))
+    print(len(resp['hits']['hits']))
     for hit in resp['hits']['hits']:
         article_id = hit['_id']
         if article_id not in user_preferences.disliked_articles_ids:
@@ -120,8 +121,6 @@ async def search(user_id: Optional[str], query: str, days_back: int, page: int):
     user_preferences = load_user_preferences(user_id)
     for hit in resp['hits']['hits']:
         article_id = hit['_id']
-        if article_id in user_preferences.liked_articles_ids:
-            print(article_id)
         article = {
             'article_id': article_id,
             'liked': (article_id in user_preferences.liked_articles_ids),
