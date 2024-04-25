@@ -38,11 +38,9 @@ export class AppComponent implements OnInit {
   constructor(private articleService: ArticleService){
     while (this.userId === null) {
       this.userId = prompt('Enter your username:');
-      alert(this.userId )
 
     }
-    alert(this.userId )
-    this.articleService.getRecomendation(this.userId, 1).subscribe(
+    this.articleService.getRecommendation(this.userId, 1).subscribe(
       (response: SearchResponse) => {
         for (let article of response.hits) {
           if (article.liked) {
