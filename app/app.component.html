@@ -23,7 +23,7 @@
           <form>
             <div class="row">
               <div class="col-xs-8 col-sm-10"> <!-- Adjust column sizes for responsiveness -->
-                <input type="text" class="form-control" placeholder="Search..." #key="ngModel" ngModel name="key" id="searchName">
+                <input type="text" class="form-control" placeholder="Search..." #key="ngModel" [(ngModel)]="this.searchVal" name="key" id="searchName">
               </div>
               <div class="col-xs-4 col-sm-2"> <!-- Adjust column sizes for the button -->
                 <button type="button" class="btn btn-search btn-block" on-click="search(key.value, 0)">Search</button>
@@ -49,6 +49,7 @@
 
   <div class="row ng-scope">
     <div class="col-md-8 col-md-push-2">
+      <p *ngIf="wrongValue != ''" class="search-results-count">Opps! we did not find any results for {{wrongValue}} did you mean    <a *ngFor="let suggestion of searchResponse?.spelling_suggestions" on-click="searchFromSuggestions(suggestion)" style="cursor: pointer"> {{suggestion}} </a> ? </p>
       <p class="search-results-count">{{getSearchResultsCountText()}}</p>
       <section *ngFor="let article of searchResponse?.hits" class="search-result-item">
         <a class="image-link" href="{{article?.url}}" target="_blank"><img class="image" height="250px" width="400px" src="{{article?.image}}">

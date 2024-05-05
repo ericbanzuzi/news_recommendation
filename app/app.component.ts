@@ -4,7 +4,7 @@ import {  HttpErrorResponse } from '@angular/common/http';
 import { environment } from '../environments/environment';
 import {ArticleService} from "./article.service";
 import {Page} from "./page";
-import {NgFor} from "@angular/common";
+import {NgFor, NgIf} from "@angular/common";
 import {FormsModule} from "@angular/forms";
 import {SearchResponse} from "./searchResponse";
 import {min} from "rxjs";
@@ -12,7 +12,7 @@ import {min} from "rxjs";
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [RouterOutlet,NgFor,FormsModule],
+  imports: [RouterOutlet,NgFor,NgIf,FormsModule],
   templateUrl: './app.component.html',
   styleUrl: './app.component.css'
 })
@@ -24,10 +24,13 @@ export class AppComponent implements OnInit {
   title = 'SearchEnginesUI';
   thumbsUpArticlesIdsSet = new Set();
   thumbsDownArticlesIdsSet = new Set();
-  lastSearchQuery: string | null = null;
+  lastSearchQuery: string | String | null = null;
   lastSearchMinPublishTimeStr: string | null = null;
   searchResponse: SearchResponse | null = null;
   currentPageIdx: number | null = null;
+  searchVal: string | String | null = '';
+  spellingSuggestion: String  = '';
+  wrongValue: string | String = '';
   private pageSize = environment.pageSize;
   private apiServerUrl = environment.apiBaseUrl;
   AppComponent(){}
@@ -63,7 +66,7 @@ export class AppComponent implements OnInit {
     this.minPublishTimeStr = minPublishTimeStr;
   }
 
-  search(query: string | null, pageIdx: number) {
+  search(query: string | String | null, pageIdx: number) {
     if (query === null || this.userId === null) {
       return;
     }
@@ -80,6 +83,8 @@ export class AppComponent implements OnInit {
     }
     this.articleService.getSearchResponse(this.userId, query, daysBack, pageIdx).subscribe(
       (response: SearchResponse) => {
+        this.spellingSuggestion = '';
+        this.wrongValue = '';
         this.lastSearchQuery = query;
         this.lastSearchMinPublishTimeStr = this.minPublishTimeStr;
         for (let article of response.hits) {
@@ -92,11 +97,24 @@ export class AppComponent implements OnInit {
         }
         this.searchResponse = response;
         this.currentPageIdx = pageIdx;
+        if ( this.searchResponse.spelling_suggestions.length != 0){
+          this.wrongValue = query;
+          alert(this.wrongValue);
+          this.spellingSuggestion = this.searchResponse.spelling_suggestions[0];
+        }
       },
       (error: HttpErrorResponse) => {
         alert(error.message);
       }
     );
+  }
+
+  searchFromSuggestions(query: string | String | null){
+    this.search(query, 0)
+    this.searchVal = String(query)
+    this.spellingSuggestion = '';
+    this.wrongValue = '';
+    //this.searchResponse?.spelling_suggestions.
   }
 
   getThumbsUpStatusClass(article_id: string | undefined) {
