@@ -13,6 +13,20 @@ from .models import UserFeedback
 from .users_preferences_handling import load_user_preferences, get_updated_user_preferences, save_user_preferences
 
 
+AUTHENTICATION = False
+
+# configure elastic correctly
+if AUTHENTICATION:
+    ELASTIC_PASSWORD = 'password'  # when using authentication, paste your password for elastic search here
+
+    client = Elasticsearch(hosts=['https://localhost:9200'],
+                           ca_certs='../http_ca.crt',
+                           basic_auth=("elastic", ELASTIC_PASSWORD),
+                           verify_certs=False)
+else:
+    client = Elasticsearch("http://localhost:9200/")
+
+
 class Settings(BaseSettings):
     page_size: int = 10
 
@@ -27,31 +41,28 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+index_name = "articles"
 
 
 @app.get("/recommend")
 async def recommend(user_id: Optional[str], page: int):
     tic = time.time()
-    client = Elasticsearch("http://localhost:9200/")
-    print("_________________!22222222222222222222222222222222222")
 
     user_preferences = load_user_preferences(user_id)
-
-    print("_________________!11111111111111111111111111111111111111")
     query = {
         "query": {
             "more_like_this": {
                 "fields": ["content"],  # Fields to consider
                 "like": [
                     {
-                        "_index": "articles",
+                        "_index": index_name,
                         "_id": doc_id
                     }
                     for doc_id in user_preferences.liked_articles_ids
                 ],
                 "unlike": [
                     {
-                        "_index": "articles",
+                        "_index": index_name,
                         "_id": doc_id
                     }
                     for doc_id in user_preferences.disliked_articles_ids
@@ -62,11 +73,9 @@ async def recommend(user_id: Optional[str], page: int):
             }
         }
     }
-    print("here1")
 
     # Execute the query
-    resp = client.search(index="articles", body=query)
-    print("here2")
+    resp = client.search(index=index_name, body=query)
 
     toc = time.time()
     delay_secs = toc - tic
@@ -76,7 +85,7 @@ async def recommend(user_id: Optional[str], page: int):
         'num_results': resp['hits']['total']['value'],
         'delay_secs': delay_secs,
     }
-    print(len(resp['hits']['hits']))
+
     for hit in resp['hits']['hits']:
         article_id = hit['_id']
         if article_id not in user_preferences.disliked_articles_ids:
@@ -91,8 +100,6 @@ async def recommend(user_id: Optional[str], page: int):
 
 
 def clean_text(line):
-    # YOUR CODE HERE
-    # print(line)
     exclude = set(string.punctuation)
     line = ''.join(ch for ch in line if (ch not in exclude and not ch.isdigit()))
     return line.split()
@@ -106,7 +113,7 @@ async def search(user_id: Optional[str], query: str, days_back: int, page: int):
     else:
         min_publish_datetime = datetime.fromtimestamp(int(time.time()) - days_back * 24 * 60 * 60, tz=timezone.utc)
     user_preferences = load_user_preferences(user_id)
-    client = Elasticsearch("http://localhost:9200/")
+
     must_queries: List[dict] = [
         {"match": {"content": query}},
         {"range": {"date": {"gte": min_publish_datetime.isoformat()}}},
@@ -117,7 +124,7 @@ async def search(user_id: Optional[str], query: str, days_back: int, page: int):
                 "fields": ["content"],
                 "like": [
                     {
-                        "_index": "articles",
+                        "_index": index_name,
                         "_id": article_id
                     }
                     for article_id in user_preferences.liked_articles_ids
@@ -138,7 +145,7 @@ async def search(user_id: Optional[str], query: str, days_back: int, page: int):
             }
         }
     resp = client.search(
-        index="articles",
+        index=index_name,
         from_=page * settings.page_size,
         size=settings.page_size,
         body={
@@ -186,9 +193,8 @@ def most_similar_words(word, word_list, top_n=5):
 def correct_spelling(query, client, user_id, tic):
     # Search for similar terms using a fuzzy query
     #
-    print("query : ", query)
     res = client.search(
-        index="articles",
+        index=index_name,
         body={
             "query": {
                 "fuzzy": {
@@ -201,7 +207,6 @@ def correct_spelling(query, client, user_id, tic):
         }
     )
 
-    print(res['hits']['hits'])
     toc = time.time()
     delay_secs = toc - tic
     if res['hits']['total']['value'] > 0:
@@ -215,8 +220,6 @@ def correct_spelling(query, client, user_id, tic):
         user_preferences = load_user_preferences(user_id)
         for hit in res['hits']['hits']:
             article_id = hit['_id']
-            if article_id in user_preferences.liked_articles_ids:
-                print(article_id)
             article = {
                 'article_id': article_id,
                 'liked': (article_id in user_preferences.liked_articles_ids),
@@ -231,8 +234,6 @@ def correct_spelling(query, client, user_id, tic):
         # #recommendations, spelling_suggestions = correct_spelling(query, client, user_id)
         suggestions = set(spelling_suggestions)
 
-        print(suggestions)
-        print("Did you mean:")
         word_list = [word for word in suggestions if word]
         word_list = set(word_list)
         similar_words = most_similar_words(query, word_list)
@@ -240,7 +241,6 @@ def correct_spelling(query, client, user_id, tic):
         suggestions = []
         for word, score in similar_words[:max(len(similar_words), 3)]:
             suggestions.append(word)
-        print(similar_words)
         recommendations['spelling_suggestions']= suggestions
         return recommendations
         # return recommendations, res['hits']['hits'][0]['_source']['content'].split()
