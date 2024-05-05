@@ -1,5 +1,7 @@
 import time
-from typing import Optional
+import string
+import textdistance
+from typing import List, Optional
 from datetime import datetime, timezone
 
 from fastapi import FastAPI
@@ -88,6 +90,14 @@ async def recommend(user_id: Optional[str], page: int):
     return result
 
 
+def clean_text(line):
+    # YOUR CODE HERE
+    # print(line)
+    exclude = set(string.punctuation)
+    line = ''.join(ch for ch in line if (ch not in exclude and not ch.isdigit()))
+    return line.split()
+
+
 @app.get("/search")
 async def search(user_id: Optional[str], query: str, days_back: int, page: int):
     tic = time.time()
@@ -95,21 +105,47 @@ async def search(user_id: Optional[str], query: str, days_back: int, page: int):
         min_publish_datetime = datetime.fromtimestamp(0, tz=timezone.utc)
     else:
         min_publish_datetime = datetime.fromtimestamp(int(time.time()) - days_back * 24 * 60 * 60, tz=timezone.utc)
+    user_preferences = load_user_preferences(user_id)
     client = Elasticsearch("http://localhost:9200/")
+    must_queries: List[dict] = [
+        {"match": {"content": query}},
+        {"range": {"date": {"gte": min_publish_datetime.isoformat()}}},
+    ]
+    if user_preferences.liked_articles_ids:
+        must_queries.append({
+            "more_like_this": {
+                "fields": ["content"],
+                "like": [
+                    {
+                        "_index": "articles",
+                        "_id": article_id
+                    }
+                    for article_id in user_preferences.liked_articles_ids
+                ],
+                "min_term_freq": 1,
+                "min_doc_freq": 1,
+                "include": True
+            }
+        })
+    bool_query: dict = {"must": must_queries}
+    if user_preferences.disliked_articles_ids:
+        bool_query["must_not"] = {
+            "ids": {
+                "values": [
+                    article_id
+                    for article_id in user_preferences.disliked_articles_ids
+                ]
+            }
+        }
     resp = client.search(
         index="articles",
         from_=page * settings.page_size,
         size=settings.page_size,
         body={
             "query": {
-                "bool": {
-                    "must": [
-                        {"match": {"content": query}},
-                        {"range": {"date": {"gte": min_publish_datetime.isoformat()}}}
-                    ]
-                }
+                "bool": bool_query
             }
-        }
+        },
     )
     toc = time.time()
     delay_secs = toc - tic
@@ -128,6 +164,8 @@ async def search(user_id: Optional[str], query: str, days_back: int, page: int):
         }
         article |= hit['_source']
         result['hits'].append(article)
+    if len(result['hits']) == 0:
+        return correct_spelling(query, client, user_id, tic)
     return result
 
 
@@ -137,3 +175,74 @@ async def provide_feedback(user_feedback: UserFeedback):
     updated_user_preferences = get_updated_user_preferences(user_preferences, user_feedback)
     save_user_preferences(user_feedback.user_id, updated_user_preferences)
     return True
+
+
+def most_similar_words(word, word_list, top_n=5):
+    similarities = [(w, textdistance.levenshtein.normalized_similarity(word, w)) for w in word_list]
+    sorted_similarities = sorted(similarities, key=lambda x: x[1], reverse=True)
+    return sorted_similarities[:top_n]
+
+
+def correct_spelling(query, client, user_id, tic):
+    # Search for similar terms using a fuzzy query
+    #
+    print("query : ", query)
+    res = client.search(
+        index="articles",
+        body={
+            "query": {
+                "fuzzy": {
+                    "content": {
+                        "value": query,
+                        "fuzziness": "AUTO",
+                    }
+                }
+            },
+        }
+    )
+
+    print(res['hits']['hits'])
+    toc = time.time()
+    delay_secs = toc - tic
+    if res['hits']['total']['value'] > 0:
+        recommendations = []
+        recommendations = {
+            'hits': [],
+            'num_results': res['hits']['total']['value'],
+            'delay_secs': delay_secs,
+            'spelling_suggestions': []
+        }
+        user_preferences = load_user_preferences(user_id)
+        for hit in res['hits']['hits']:
+            article_id = hit['_id']
+            if article_id in user_preferences.liked_articles_ids:
+                print(article_id)
+            article = {
+                'article_id': article_id,
+                'liked': (article_id in user_preferences.liked_articles_ids),
+                'disliked': (article_id in user_preferences.disliked_articles_ids),
+            }
+            article |= hit['_source']
+            recommendations['hits'].append(article)
+        spelling_suggestions = []
+        for suggestion in res['hits']['hits']:
+            spelling_suggestions.extend(clean_text(suggestion['_source']['content']))
+        # spelling_suggestions = clean_text(res['hits']['hits'][0]['_source']['content'])
+        # #recommendations, spelling_suggestions = correct_spelling(query, client, user_id)
+        suggestions = set(spelling_suggestions)
+
+        print(suggestions)
+        print("Did you mean:")
+        word_list = [word for word in suggestions if word]
+        word_list = set(word_list)
+        similar_words = most_similar_words(query, word_list)
+
+        suggestions = []
+        for word, score in similar_words[:max(len(similar_words), 3)]:
+            suggestions.append(word)
+        print(similar_words)
+        recommendations['spelling_suggestions']= suggestions
+        return recommendations
+        # return recommendations, res['hits']['hits'][0]['_source']['content'].split()
+    else:
+        return None
