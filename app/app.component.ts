@@ -43,23 +43,7 @@ export class AppComponent implements OnInit {
       this.userId = prompt('Enter your username:');
 
     }
-    this.articleService.getRecommendation(this.userId, 1).subscribe(
-      (response: SearchResponse) => {
-        for (let article of response.hits) {
-          if (article.liked) {
-            this.thumbsUpArticlesIdsSet.add(article.article_id);
-          }
-          if (article.disliked) {
-            this.thumbsDownArticlesIdsSet.add(article.article_id);
-          }
-        }
-        this.searchResponse = response;
-        this.currentPageIdx = 0;
-      },
-      (error: HttpErrorResponse) => {
-        alert(error.message);
-      }
-    );
+    this.search(null, 0);
   }
 
   setMinPublishTimeStr(minPublishTimeStr: string){
@@ -67,10 +51,10 @@ export class AppComponent implements OnInit {
   }
 
   search(query: string | String | null, pageIdx: number) {
-    if (query === null || this.userId === null) {
+    if (this.userId === null) {
       return;
     }
-    let daysBack = -1;
+    let daysBack: number | null = null;
     switch (this.minPublishTimeStr) {
       case "Last day":
         daysBack = 1;
@@ -97,9 +81,8 @@ export class AppComponent implements OnInit {
         }
         this.searchResponse = response;
         this.currentPageIdx = pageIdx;
-        if ( this.searchResponse.spelling_suggestions.length != 0){
+        if (query !== null && this.searchResponse.spelling_suggestions.length != 0){
           this.wrongValue = query;
-          alert(this.wrongValue);
           this.spellingSuggestion = this.searchResponse.spelling_suggestions[0];
         }
       },

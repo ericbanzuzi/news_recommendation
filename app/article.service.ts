@@ -12,12 +12,15 @@ export class ArticleService {
 
   constructor(private http: HttpClient){}
 
-  public getRecommendation(userId: string, pageIdx: number): Observable<SearchResponse> {
-    return this.http.get<SearchResponse>(`${this.apiServerUrl}/recommend?user_id=${userId}&page=${pageIdx}`);
-  }
-
-  public getSearchResponse(userId: string, query: string | String, daysBack: number, pageIdx: number): Observable<SearchResponse> {
-    return this.http.get<SearchResponse>(`${this.apiServerUrl}/search?user_id=${userId}&query=${query}&days_back=${daysBack}&page=${pageIdx}`);
+  public getSearchResponse(userId: string, query: string | String | null, daysBack: number | null, pageIdx: number): Observable<SearchResponse> {
+    let url = `${this.apiServerUrl}/search?user_id=${userId}&page=${pageIdx}`
+    if (query !== null) {
+      url += `&query=${query}`;
+    }
+    if (daysBack !== null) {
+      url += `&days_back=${daysBack}`;
+    }
+    return this.http.get<SearchResponse>(url);
   }
 
   public provideFeedbackForArticle(user_id: string, article_id: string, action: string): Observable<boolean> {
