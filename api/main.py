@@ -1,7 +1,7 @@
 import time
 import string
 import textdistance
-from typing import List, Optional
+from typing import Tuple, List, Set, Optional
 from datetime import datetime, timezone
 
 from fastapi import FastAPI
@@ -9,8 +9,10 @@ from elasticsearch import Elasticsearch
 from pydantic_settings import BaseSettings
 from fastapi.middleware.cors import CORSMiddleware
 
-from .models import UserFeedback
-from .users_preferences_handling import load_user_preferences, get_updated_user_preferences, save_user_preferences
+from .models import UserFeedback, UserPreferences  # type: ignore
+from .users_preferences_handling import (  # type: ignore
+    load_user_preferences, get_updated_user_preferences, save_user_preferences
+)
 
 
 AUTHENTICATION = False
@@ -44,22 +46,47 @@ app.add_middleware(
 index_name = "articles"
 
 
-def clean_text(line):
-    exclude = set(string.punctuation)
-    line = ''.join(ch for ch in line if (ch not in exclude and not ch.isdigit()))
-    return line.split()
+def get_result_from_elasticsearch_response(
+        elasticsearch_response,
+        user_preferences: UserPreferences,
+        query: Optional[str],
+        tic: float,
+        include_spelling_suggestions: bool,
+        ) -> dict:
+    result = {
+        'hits': [],
+        'num_results': elasticsearch_response['hits']['total']['value'],
+    }
+    for hit in elasticsearch_response['hits']['hits']:
+        article_id = hit['_id']
+        article = {
+            'article_id': article_id,
+            'liked': (article_id in user_preferences.liked_articles_ids),
+            'disliked': (article_id in user_preferences.disliked_articles_ids),
+        }
+        article |= hit['_source']
+        result['hits'].append(article)
+    if include_spelling_suggestions:
+        if query is None:
+            raise RuntimeError
+        result["spelling_suggestions"] = get_spelling_suggestions(
+            query_word=query, suggested_articles=elasticsearch_response['hits']['hits']
+        )
+    result["delay_secs"] = time.time() - tic
+    return result
 
 
-@app.get("/search")
-async def search(user_id: str, page: int, query: Optional[str] = None, days_back: Optional[int] = None):
-    tic = time.time()
+def get_elasticsearch_search_body(
+        query: Optional[str],
+        days_back: Optional[int],
+        user_preferences: UserPreferences,
+        ) -> dict:
     must_queries: List[dict] = []
     if query is not None:
         must_queries.append({"match": {"content": query}})
     if days_back is not None:
         min_publish_datetime = datetime.fromtimestamp(int(time.time()) - days_back * 24 * 60 * 60, tz=timezone.utc)
         must_queries.append({"range": {"date": {"gte": min_publish_datetime.isoformat()}}})
-    user_preferences = load_user_preferences(user_id)
     if user_preferences.liked_articles_ids:
         must_queries.append({
             "more_like_this": {
@@ -96,31 +123,28 @@ async def search(user_id: str, page: int, query: Optional[str] = None, days_back
         }
     else:
         body = {}
-    resp = client.search(
+    return body
+
+
+@app.get("/search")
+async def search(user_id: str, page: int, query: Optional[str] = None, days_back: Optional[int] = None):
+    tic = time.time()
+    user_preferences = load_user_preferences(user_id)
+    elasticsearch_response = client.search(
         index=index_name,
         from_=page * settings.page_size,
         size=settings.page_size,
-        body=body,
+        body=get_elasticsearch_search_body(query, days_back, user_preferences),
     )
-    toc = time.time()
-    delay_secs = toc - tic
-    result = {
-        'hits': [],
-        'num_results': resp['hits']['total']['value'],
-        'delay_secs': delay_secs,
-    }
-    user_preferences = load_user_preferences(user_id)
-    for hit in resp['hits']['hits']:
-        article_id = hit['_id']
-        article = {
-            'article_id': article_id,
-            'liked': (article_id in user_preferences.liked_articles_ids),
-            'disliked': (article_id in user_preferences.disliked_articles_ids),
-        }
-        article |= hit['_source']
-        result['hits'].append(article)
+    result = get_result_from_elasticsearch_response(
+        elasticsearch_response,
+        user_preferences,
+        query,
+        tic,
+        include_spelling_suggestions=False,
+    )
     if query is not None and not result['hits']:
-        return correct_spelling(query, client, user_id, tic)
+        return fuzzy_search(query, user_preferences, tic)
     return result
 
 
@@ -132,16 +156,33 @@ async def provide_feedback(user_feedback: UserFeedback):
     return True
 
 
-def most_similar_words(word, word_list, top_n=5):
-    similarities = [(w, textdistance.levenshtein.normalized_similarity(word, w)) for w in word_list]
+def tokenize_text(text: str) -> List[str]:
+    exclude = set(string.punctuation)
+    text = ''.join(ch for ch in text if (ch not in exclude and not ch.isdigit()))
+    return text.split()
+
+
+def get_most_similar_words(word: str, candidate_similar_words: Set[str], top_n: int) -> List[Tuple[str, float]]:
+    similarities = [(w, textdistance.levenshtein.normalized_similarity(word, w)) for w in candidate_similar_words]
     sorted_similarities = sorted(similarities, key=lambda x: x[1], reverse=True)
     return sorted_similarities[:top_n]
 
 
-def correct_spelling(query, client, user_id, tic):
-    # Search for similar terms using a fuzzy query
-    #
-    res = client.search(
+def get_spelling_suggestions(query_word: str, suggested_articles: List[dict]) -> List[str]:
+    candidate_spelling_suggestions: Set[str] = set()
+    for suggested_article in suggested_articles:
+        suggested_article_tokens = tokenize_text(suggested_article['_source']['content'])
+        candidate_spelling_suggestions.update(suggested_article_tokens)
+    candidate_spelling_suggestions = {word for word in candidate_spelling_suggestions if word}
+    most_similar_words = get_most_similar_words(query_word, candidate_spelling_suggestions, top_n=5)
+    return [
+        word
+        for word, _ in most_similar_words
+    ]
+
+
+def fuzzy_search(query: str, user_preferences: UserPreferences, tic: float):
+    elasticsearch_response = client.search(
         index=index_name,
         body={
             "query": {
@@ -154,43 +195,10 @@ def correct_spelling(query, client, user_id, tic):
             },
         }
     )
-
-    toc = time.time()
-    delay_secs = toc - tic
-    if res['hits']['total']['value'] > 0:
-        recommendations = []
-        recommendations = {
-            'hits': [],
-            'num_results': res['hits']['total']['value'],
-            'delay_secs': delay_secs,
-            'spelling_suggestions': []
-        }
-        user_preferences = load_user_preferences(user_id)
-        for hit in res['hits']['hits']:
-            article_id = hit['_id']
-            article = {
-                'article_id': article_id,
-                'liked': (article_id in user_preferences.liked_articles_ids),
-                'disliked': (article_id in user_preferences.disliked_articles_ids),
-            }
-            article |= hit['_source']
-            recommendations['hits'].append(article)
-        spelling_suggestions = []
-        for suggestion in res['hits']['hits']:
-            spelling_suggestions.extend(clean_text(suggestion['_source']['content']))
-        # spelling_suggestions = clean_text(res['hits']['hits'][0]['_source']['content'])
-        # #recommendations, spelling_suggestions = correct_spelling(query, client, user_id)
-        suggestions = set(spelling_suggestions)
-
-        word_list = [word for word in suggestions if word]
-        word_list = set(word_list)
-        similar_words = most_similar_words(query, word_list)
-
-        suggestions = []
-        for word, score in similar_words[:max(len(similar_words), 3)]:
-            suggestions.append(word)
-        recommendations['spelling_suggestions'] = suggestions
-        return recommendations
-        # return recommendations, res['hits']['hits'][0]['_source']['content'].split()
-    else:
-        return None
+    return get_result_from_elasticsearch_response(
+        elasticsearch_response,
+        user_preferences,
+        query,
+        tic,
+        include_spelling_suggestions=True,
+    )
