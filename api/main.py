@@ -106,18 +106,15 @@ def clean_text(line):
 
 
 @app.get("/search")
-async def search(user_id: Optional[str], query: str, days_back: int, page: int):
+async def search(user_id: str, query: Optional[str], days_back: int, page: int):
     tic = time.time()
-    if days_back == -1:
-        min_publish_datetime = datetime.fromtimestamp(0, tz=timezone.utc)
-    else:
+    must_queries: List[dict] = []
+    if query is not None:
+        must_queries.append({"match": {"content": query}})
+    if days_back != -1:
         min_publish_datetime = datetime.fromtimestamp(int(time.time()) - days_back * 24 * 60 * 60, tz=timezone.utc)
+        must_queries.append({"range": {"date": {"gte": min_publish_datetime.isoformat()}}})
     user_preferences = load_user_preferences(user_id)
-
-    must_queries: List[dict] = [
-        {"match": {"content": query}},
-        {"range": {"date": {"gte": min_publish_datetime.isoformat()}}},
-    ]
     if user_preferences.liked_articles_ids:
         must_queries.append({
             "more_like_this": {
@@ -134,7 +131,9 @@ async def search(user_id: Optional[str], query: str, days_back: int, page: int):
                 "include": True
             }
         })
-    bool_query: dict = {"must": must_queries}
+    bool_query: dict = {}
+    if must_queries:
+        bool_query["must"] = must_queries
     if user_preferences.disliked_articles_ids:
         bool_query["must_not"] = {
             "ids": {
@@ -144,15 +143,19 @@ async def search(user_id: Optional[str], query: str, days_back: int, page: int):
                 ]
             }
         }
+    if bool_query:
+        body: dict = {
+            "query": {
+                "bool": bool_query
+            }
+        }
+    else:
+        body = {}
     resp = client.search(
         index=index_name,
         from_=page * settings.page_size,
         size=settings.page_size,
-        body={
-            "query": {
-                "bool": bool_query
-            }
-        },
+        body=body,
     )
     toc = time.time()
     delay_secs = toc - tic
