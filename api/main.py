@@ -80,10 +80,21 @@ def get_elasticsearch_search_body(
         query: Optional[str],
         days_back: Optional[int],
         user_preferences: UserPreferences,
+        require_exact_matching: bool,
         ) -> dict:
     must_queries: List[dict] = []
     if query is not None:
-        must_queries.append({"match": {"content": query}})
+        if require_exact_matching:
+            must_queries.append({"match": {"content": query}})
+        else:
+            must_queries.append({
+                "fuzzy": {
+                    "content": {
+                        "value": query,
+                        "fuzziness": "AUTO",
+                    }
+                }
+            })
     if days_back is not None:
         min_publish_datetime = datetime.fromtimestamp(int(time.time()) - days_back * 24 * 60 * 60, tz=timezone.utc)
         must_queries.append({"range": {"date": {"gte": min_publish_datetime.isoformat()}}})
@@ -134,7 +145,7 @@ async def search(user_id: str, page: int, query: Optional[str] = None, days_back
         index=index_name,
         from_=page * settings.page_size,
         size=settings.page_size,
-        body=get_elasticsearch_search_body(query, days_back, user_preferences),
+        body=get_elasticsearch_search_body(query, days_back, user_preferences, require_exact_matching=True),
     )
     result = get_result_from_elasticsearch_response(
         elasticsearch_response,
@@ -144,7 +155,7 @@ async def search(user_id: str, page: int, query: Optional[str] = None, days_back
         include_spelling_suggestions=False,
     )
     if query is not None and not result['hits']:
-        return fuzzy_search(query, user_preferences, tic)
+        return fuzzy_search(query, days_back, user_preferences, tic)
     return result
 
 
@@ -181,19 +192,10 @@ def get_spelling_suggestions(query_word: str, suggested_articles: List[dict]) ->
     ]
 
 
-def fuzzy_search(query: str, user_preferences: UserPreferences, tic: float):
+def fuzzy_search(query: str, days_back: Optional[int], user_preferences: UserPreferences, tic: float):
     elasticsearch_response = client.search(
         index=index_name,
-        body={
-            "query": {
-                "fuzzy": {
-                    "content": {
-                        "value": query,
-                        "fuzziness": "AUTO",
-                    }
-                }
-            },
-        }
+        body=get_elasticsearch_search_body(query, days_back, user_preferences, require_exact_matching=False),
     )
     return get_result_from_elasticsearch_response(
         elasticsearch_response,
