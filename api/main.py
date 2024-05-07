@@ -44,61 +44,6 @@ app.add_middleware(
 index_name = "articles"
 
 
-@app.get("/recommend")
-async def recommend(user_id: Optional[str], page: int):
-    tic = time.time()
-
-    user_preferences = load_user_preferences(user_id)
-    query = {
-        "query": {
-            "more_like_this": {
-                "fields": ["content"],  # Fields to consider
-                "like": [
-                    {
-                        "_index": index_name,
-                        "_id": doc_id
-                    }
-                    for doc_id in user_preferences.liked_articles_ids
-                ],
-                "unlike": [
-                    {
-                        "_index": index_name,
-                        "_id": doc_id
-                    }
-                    for doc_id in user_preferences.disliked_articles_ids
-                ],
-                "min_term_freq": 1,  # Minimum term frequency
-                "min_doc_freq": 1,  # Minimum document frequency
-                "include": True  # Include the liked document in the results
-            }
-        }
-    }
-
-    # Execute the query
-    resp = client.search(index=index_name, body=query)
-
-    toc = time.time()
-    delay_secs = toc - tic
-    # Process the result
-    result = {
-        'hits': [],
-        'num_results': resp['hits']['total']['value'],
-        'delay_secs': delay_secs,
-    }
-
-    for hit in resp['hits']['hits']:
-        article_id = hit['_id']
-        if article_id not in user_preferences.disliked_articles_ids:
-            article = {
-                'article_id': article_id,
-                'liked': (article_id in user_preferences.liked_articles_ids),
-                'disliked': (article_id in user_preferences.disliked_articles_ids),
-            }
-            article |= hit['_source']
-            result['hits'].append(article)
-    return result
-
-
 def clean_text(line):
     exclude = set(string.punctuation)
     line = ''.join(ch for ch in line if (ch not in exclude and not ch.isdigit()))
@@ -106,12 +51,12 @@ def clean_text(line):
 
 
 @app.get("/search")
-async def search(user_id: str, query: Optional[str], days_back: int, page: int):
+async def search(user_id: str, page: int, query: Optional[str] = None, days_back: Optional[int] = None):
     tic = time.time()
     must_queries: List[dict] = []
     if query is not None:
         must_queries.append({"match": {"content": query}})
-    if days_back != -1:
+    if days_back is not None:
         min_publish_datetime = datetime.fromtimestamp(int(time.time()) - days_back * 24 * 60 * 60, tz=timezone.utc)
         must_queries.append({"range": {"date": {"gte": min_publish_datetime.isoformat()}}})
     user_preferences = load_user_preferences(user_id)
@@ -174,7 +119,7 @@ async def search(user_id: str, query: Optional[str], days_back: int, page: int):
         }
         article |= hit['_source']
         result['hits'].append(article)
-    if len(result['hits']) == 0:
+    if query is not None and not result['hits']:
         return correct_spelling(query, client, user_id, tic)
     return result
 
@@ -244,7 +189,7 @@ def correct_spelling(query, client, user_id, tic):
         suggestions = []
         for word, score in similar_words[:max(len(similar_words), 3)]:
             suggestions.append(word)
-        recommendations['spelling_suggestions']= suggestions
+        recommendations['spelling_suggestions'] = suggestions
         return recommendations
         # return recommendations, res['hits']['hits'][0]['_source']['content'].split()
     else:
